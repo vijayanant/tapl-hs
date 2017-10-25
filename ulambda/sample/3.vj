@@ -1,1 +1,0 @@
-if (if zero 0 then true else false) then true else false
