@@ -13,7 +13,7 @@ main = do
       putStr "Parse tree ==> \n" 
       putStrLn (show parseTree)
       case parseTree of
-        Right exp -> putStrLn $ "\nEvaluation result  ==> \n" ++ (show.eval') exp
+        Right exp -> putStrLn $ "\nEvaluation result  ==> \n" ++ (show.eval) exp
         Left  err -> putStrLn $ show err
     _ -> getProgName >>= \n ->  putStrLn $ "Usage: " ++ n  ++ "<sourceFile>"
 
