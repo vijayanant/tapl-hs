@@ -3,3 +3,4 @@ resolver: lts-9.6
 packages:
 - ./arithmatic
 - ./ulambda
+- ./simplebool/
