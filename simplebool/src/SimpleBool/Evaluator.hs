@@ -2,6 +2,7 @@ module SimpleBool.Evaluator
 (run)
 where 
 
+import SimpleBool.TypeChecker
 import SimpleBool.Syntax
 import SimpleBool.Types
 import Control.Arrow
@@ -71,4 +72,6 @@ eval t = case eval' t of
 
 
 run :: Term -> Term
-run t = eval $ deBruijn t
+run t = case typeOf [] t  of
+  TBool  ->  eval $ deBruijn t
+  (TArr t1 t2 )  ->  eval $ deBruijn t

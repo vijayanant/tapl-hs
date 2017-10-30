@@ -8,7 +8,6 @@ import Text.Parsec
 import System.Environment
 import Control.Monad.IO.Class
 
-
 main = do 
   args <- getArgs
   case args of

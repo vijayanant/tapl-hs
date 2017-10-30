@@ -20,7 +20,6 @@ getType ctx i = case getBinding ctx i of
 getBinding :: Context -> Int -> Binding
 getBinding ctx i = (snd . head . drop i) ctx
 
-
 typeOf :: Context -> Term -> Type
 typeOf _ (T) = TBool
 typeOf _ (F) = TBool
