@@ -70,8 +70,10 @@ eval t = case eval' t of
   Left t' -> eval t' -- reducible
   Right t' -> t'     -- irreducible
 
+run :: Term -> Either String Term
+run t = do
+  let t' = deBruijn t
+  case typeOf [] t'  of
+    Right ty -> return $ eval $ t'
+    Left e   -> Left $ "TypeChecker: " ++  e
 
-run :: Term -> Term
-run t = case typeOf [] t  of
-  TBool  ->  eval $ deBruijn t
-  (TArr t1 t2 )  ->  eval $ deBruijn t
