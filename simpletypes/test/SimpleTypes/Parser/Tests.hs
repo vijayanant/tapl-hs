@@ -23,8 +23,8 @@ parseValueTerms = testGroup "Value Terms"
   ]
 
 parseSimpleTerms = testGroup "Simple Terms"
-  [ testCase "parseIf1"     t_if_1
-  , testCase "parseIf2"     t_if_2
+  [ testCase "parseCond1"     t_cond_1
+  , testCase "parseCond2"     t_cond_2
   , testCase "parseAbstraction1"    t_abs_1
   , testCase "parseAbstraction2"    t_abs_2
   , testCase "parseAbstraction3"    t_abs_3
@@ -39,31 +39,31 @@ parseDerivedTerms = testGroup "Derived Terms"
   ]
 
 
-iff = \t -> If t t F 
+condf = \t -> Cond t t F 
 abstb = \t -> Abs "x" TBool t  
 
 t_true_1  = assertEqual "Failed to parse 'True'"   T      $ parseProgram "True"
 t_false_1 = assertEqual "Failed to parse 'False'"  F      $ parseProgram "False"
 t_unit_1  = assertEqual "Failed to parse 'Unit'"  Unit  $ parseProgram "unit"
 
-t_if_1 = assertEqual "Failed to parse 'If" (If T F T)  $ parseProgram "if True then False else True"
+t_cond_1 = assertEqual "Failed to parse 'Cond" (Cond T F T)  $ parseProgram "cond ( True ) ( False ) ( True )"
 
 t_abs_1 = assertEqual "Failed to parse 'Abstraction'" (Abs "f" TBool T )  $ parseProgram "\\f:Bool.True"
 t_abs_2 = assertEqual "Failed to parse 'Abstraction'" (Abs "f" TBool (Var "x"))  $ parseProgram "\\f:Bool.x"
 
-t_abs_3 = assertEqual "Failed to parse 'Abstraction'" (Abs "f" TBool (If (Var "x") T F ))  $ 
-  parseProgram "\\f:Bool.if x then True else False"
+t_abs_3 = assertEqual "Failed to parse 'Abstraction'" (Abs "f" TBool (Cond (Var "x") T F ))  $ 
+  parseProgram "\\f:Bool.cond ( x )  ( True )  ( False )"
 
-t_abs_4 = assertEqual "Failed to parse 'Abstraction'" (Abs "bool" TBool (If (Var "bool") (Var "bool") F ))  $ 
-  parseProgram "\\bool:Bool.if bool then bool else False"
+t_abs_4 = assertEqual "Failed to parse 'Abstraction'" (Abs "bool" TBool (Cond (Var "bool") (Var "bool") F ))  $ 
+  parseProgram "\\bool:Bool.cond ( bool )  ( bool )  ( False )"
 
-t_abs_5 = assertEqual "Failed to parse 'Abstraction'" (Abs "bool" TBool (If (Var "bool") (Var "bool") F ))  $ 
-  parseProgram "\\bool:Bool.if bool then bool else False"
+t_abs_5 = assertEqual "Failed to parse 'Abstraction'" (Abs "bool" TBool (Cond (Var "bool") (Var "bool") F ))  $ 
+  parseProgram "\\bool:Bool.cond ( bool )  ( bool )  ( False )"
 
-t_app_1 = assertEqual "Failed to parse 'Application'" (App (abstb (iff (Var "x"))) T) $
-  parseProgram "(\\x:Bool.if x then x else False) True"
+t_app_1 = assertEqual "Failed to parse 'Application'" (App (abstb (condf (Var "x"))) T) $
+  parseProgram "(\\x:Bool.cond ( x )  ( x )  ( False )) True"
 
-t_if_2 = assertEqual "Failed to parse 'If" (If (App (Abs "x" TBool  (Var "x")) T) F T)  $ parseProgram "if ((\\x:Bool.x) True) then False else True"
+t_cond_2 = assertEqual "Failed to parse 'Cond" (Cond (App (Abs "x" TBool  (Var "x")) T) F T)  $ parseProgram "cond ((\\x:Bool.x) True) ( False ) ( True )"
   
 -------- Derived Terms ----------
 t_seq_1 = assertEqual "Failed to parse 'Sequence'" (App (Abs "_" TUnit F) T) $

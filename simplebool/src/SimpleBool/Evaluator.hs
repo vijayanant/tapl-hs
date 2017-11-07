@@ -1,5 +1,4 @@
 module SimpleBool.Evaluator 
-(run)
 where 
 
 import SimpleBool.TypeChecker

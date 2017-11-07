@@ -27,7 +27,7 @@ typeOf _ (F) = Right TBool
 typeOf _ (Unit) = Right TUnit
 typeOf ctx (Var x ) = Left "Internal Error"
 typeOf ctx (VarI x k) = getType ctx k -- context lookup will not fail for out simple system 
-typeOf ctx (If t1 t2 t3)  = do 
+typeOf ctx (Cond t1 t2 t3)  = do 
   ty1 <- typeOf ctx t1
   ty2 <- typeOf ctx t2
   ty3 <- typeOf ctx t3

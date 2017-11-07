@@ -18,15 +18,15 @@ parseApplication = ( foldl1 App ) <$> ( many1 parseTerm )
 
 parseTerm :: Parser Term
 parseTerm = spaces >>  (
-  {-parens parseSeq <|>-}
-  parens parseApplication <|>
   parseUnit  <|>
   parseTrue  <|>
   parseFalse <|>
-  parseIf    <|>
   parseAbstraction <|> 
+  parseCond    <|>
   parseVariable <|>
-  parens parseTerm
+  {-parseSeq <|>-}
+  parens parseTerm <|>
+  parens parseApplication    
   ) <* spaces
 
 parens :: Parser Term -> Parser Term
@@ -61,27 +61,29 @@ parseAbstraction = do
   t <- parseApplication
   return $ Abs x ty t 
 
-parseIf :: Parser Term
-parseIf = do 
-  string "if" 
+{-parseE = parseTerm <|> parseApplication-}
+
+parseE = parseApplication <|> parseTerm
+
+parseCond :: Parser Term
+parseCond = do 
+  string "cond" 
   spaces
-  t1 <- parseTerm 
+  t1 <- parens parseApplication 
   spaces
-  string "then"
+  t2 <- parens  parseApplication
   spaces
-  t2 <-  parseTerm
-  spaces
-  string "else"
-  spaces
-  t3 <- parseTerm
-  return $ If t1 t2 t3
+  t3 <- parseApplication
+  return $ Cond t1 t2 t3
 
 parseSeq :: Parser Term
 parseSeq = do 
+  char ';'
   t1 <- parseTerm 
   char ';'
-  t2 <- parseApplication 
+  t2 <- parseTerm 
   return $ App (Abs "_" TUnit t2) t1
+
 
 {-parseSeq :: Parser Term-}
 {-parseSeq = do-}
