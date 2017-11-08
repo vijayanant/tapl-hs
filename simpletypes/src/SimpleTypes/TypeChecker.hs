@@ -47,8 +47,10 @@ typeOf ctx (App t1 t2) = do
     ( TArr ty11 ty12 ) | ty11 == ty2 -> return ty12
     ( TArr ty11 ty12 )              -> Left "parameter type mismatch"
     _                               -> Left "arrow type expected"
-typeof _ (Unit) = Right TUnit
-
+typeOf ctx (Let x t1 t2) = do 
+  ty1 <- typeOf ctx t1 
+  let ctx' =  addBinding ctx x (VarBind ty1)
+  typeOf ctx' t2 
 
 
 

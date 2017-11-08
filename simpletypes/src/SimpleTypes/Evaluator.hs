@@ -16,8 +16,10 @@ deBruijn' ctx (Var str)       = case lookup str ctx of
                                   _      -> VarI str 0 --undefined    -- s is a free variable
 deBruijn' ctx (Abs str ty t ) = Abs str ty (deBruijn' ((str,0):map (second succ) ctx) t)
 deBruijn' ctx (App  t1 t2 )   = App (deBruijn' ctx t1) (deBruijn' ctx t2)
-deBruijn' ctx (Cond t1 t2 t3)   = Cond (deBruijn' ctx t1) (deBruijn' ctx t2) (deBruijn' ctx t3)
-deBruijn' ctx t               = t
+deBruijn' ctx (Cond t1 t2 t3) = Cond (deBruijn' ctx t1) (deBruijn' ctx t2) (deBruijn' ctx t3)
+deBruijn' ctx (Let str t1 t2) = Let str (deBruijn' ctx' t1) (deBruijn' ctx' t2) 
+                                where ctx' = (str,0):map(second succ) ctx
+deBruijn' _   t               = t
 
 shift :: Int -> Int -> Term -> Term
 shift c d (VarI str k)   = VarI str (if k<c then k else k+d)
@@ -54,10 +56,13 @@ eval' (App (Abs _ ty t) v)  = Left $ beta (eval1 v) t               -- E-AppAbs
 eval' (App t1 t2)           = case eval' t1 of
                                 Left t' -> Left $ App t' t2          -- E-App2
                                 Right t' -> Left $ App t1 (eval1 t2) -- E-App1
-eval' (Cond t1 t2 t3)         = case eval1 t1 of
+eval' (Cond t1 t2 t3)       = case eval1 t1 of
                                 T -> Left t2
                                 F -> Left t3
                                 _ -> Left $ Cond (eval1 t1) t2 t3
+eval' (Let x t1 t2)         = case eval' t1 of
+                                Left  t' -> Left $ Let x t' t2
+                                Right t' -> Left $ beta t' t2
 eval' t                     = Right t
 
 eval1 :: Term -> Term
