@@ -9,24 +9,24 @@ deBruijn :: Term -> Term
 deBruijn = deBruijn' []
 
 deBruijn' :: [(String, Int)] -> Term -> Term
-deBruijn' ctx (Var str) = case lookup str ctx of
-                            Just m -> VarI str m
-                            _      -> VarI str 0 --undefined    -- s is a free variable
-deBruijn' ctx (Abs str t ) = Abs str (deBruijn' ((str,0):map (second succ) ctx) t)
-deBruijn' ctx (App  t1 t2 ) = App (deBruijn' ctx t1) (deBruijn' ctx t2)
+deBruijn' ctx (Var loc str) = case lookup str ctx of
+                            Just m -> VarI loc str m
+                            _      -> VarI loc str 0 --undefined    -- s is a free variable
+deBruijn' ctx (Abs loc str t ) = Abs loc str (deBruijn' ((str,0):map (second succ) ctx) t)
+deBruijn' ctx (App loc  t1 t2 ) = App loc (deBruijn' ctx t1) (deBruijn' ctx t2)
 deBruijn' ctx t         = t
 
 shift :: Int -> Int -> Term -> Term
-shift c d (VarI str k) = VarI str (if k<c then k else k+d)
-shift c d (Abs str t) = Abs str (shift (c+1) d t)
-shift c d (App t1 t2) = App (shift c d t1) (shift c d t2)
+shift c d (VarI loc str k) = VarI loc str (if k<c then k else k+d)
+shift c d (Abs loc str t) = Abs loc str (shift (c+1) d t)
+shift c d (App loc t1 t2) = App loc (shift c d t1) (shift c d t2)
 shift c d t           = t
 
 -- [j -> s] t 
 subst :: Int -> Term -> Term -> Term
-subst j s (VarI str k) = if j == k then s else VarI str j
-subst j s (Abs str t)  = Abs str (subst (j+1) (shift 0 1 s) t)
-subst j s (App t1 t2)  = App (subst j s t1) (subst j s t2)
+subst j s (VarI loc str k) = if j == k then s else VarI loc str j
+subst j s (Abs loc str t)  = Abs loc str (subst (j+1) (shift 0 1 s) t)
+subst j s (App loc t1 t2)  = App loc (subst j s t1) (subst j s t2)
 subst s j t            = t
 
 {--
@@ -45,10 +45,10 @@ Reduce single step
   Right for irreducible term (value?)
 --}
 eval' :: Term -> Either Term Term 
-eval' (App (Abs _ t) v) = Left $ beta (eval1 v) t   -- E-AppAbs
-eval' (App t1 t2)       = case eval' t1 of
-                            Left t' -> Left $ App t' t2 -- E-App2
-                            Right t' -> Left $ App t1 (eval1 t2) -- E-App1
+eval' (App loc (Abs _ _ t) v) = Left $ beta (eval1 v) t   -- E-AppAbs
+eval' (App loc t1 t2)       = case eval' t1 of
+                            Left t' -> Left $ App loc t' t2 -- E-App2
+                            Right t' -> Left $ App loc t1 (eval1 t2) -- E-App1
 eval' t                 = Right t
 
 eval1 :: Term -> Term
