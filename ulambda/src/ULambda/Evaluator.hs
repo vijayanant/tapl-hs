@@ -45,7 +45,7 @@ Reduce single step
   Right for irreducible term (value?)
 --}
 eval' :: Term -> Either Term Term 
-eval' (App loc (Abs _ _ t) v) = Left $ beta (eval1 v) t   -- E-AppAbs
+eval' (App loc (Abs loc _ t) v) = Left $ beta (eval1 v) t   -- E-AppAbs
 eval' (App loc t1 t2)       = case eval' t1 of
                             Left t' -> Left $ App loc t' t2 -- E-App2
                             Right t' -> Left $ App loc t1 (eval1 t2) -- E-App1

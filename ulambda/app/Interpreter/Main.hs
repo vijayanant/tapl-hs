@@ -14,9 +14,9 @@ main = do
   case args of
     [filename] -> do
       prg <- readFile filename 
-      case prg of 
+      case prg of
         "" ->  putStrLn "Empty file..."
-        str -> do  
+        str -> do
           ast <- fmap (parseProgram . unwords .  words ) (readFile filename)
           case ast of
             ParseError  err -> putStrLn $ show err
