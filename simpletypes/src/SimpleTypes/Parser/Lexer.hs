@@ -9,7 +9,7 @@ lexer :: T.TokenParser ()
 lexer = T.makeTokenParser style
   where
     names = ["unit", "Unit", "Bool", "True", "False"]
-    ops   = [ ";"]
+    ops   = [ ";", ":", "."]
     style = emptyDef 
              { T.commentLine = "--"
              , T.reservedOpNames = ops

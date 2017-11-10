@@ -11,28 +11,28 @@ deBruijn :: Term -> Term
 deBruijn = deBruijn' []
 
 deBruijn' :: [(String, Int)] -> Term -> Term
-deBruijn' ctx (Var str)       = case lookup str ctx of
-                                  Just m -> VarI str m
-                                  _      -> VarI str 0 --undefined    -- s is a free variable
-deBruijn' ctx (Abs str ty t ) = Abs str ty (deBruijn' ((str,0):map (second succ) ctx) t)
-deBruijn' ctx (App  t1 t2 )   = App (deBruijn' ctx t1) (deBruijn' ctx t2)
-deBruijn' ctx (Cond t1 t2 t3) = Cond (deBruijn' ctx t1) (deBruijn' ctx t2) (deBruijn' ctx t3)
-deBruijn' ctx (Let str t1 t2) = Let str (deBruijn' ctx' t1) (deBruijn' ctx' t2) 
+deBruijn' ctx (Var inf str)       = case lookup str ctx of
+                                  Just m -> VarI inf str m
+                                  _      -> VarI inf str 0 --undefined    -- s is a free variable
+deBruijn' ctx (Abs inf str ty t ) = Abs inf str ty (deBruijn' ((str,0):map (second succ) ctx) t)
+deBruijn' ctx (App inf  t1 t2 )   = App inf (deBruijn' ctx t1) (deBruijn' ctx t2)
+deBruijn' ctx (Cond inf t1 t2 t3) = Cond inf (deBruijn' ctx t1) (deBruijn' ctx t2) (deBruijn' ctx t3)
+deBruijn' ctx (Let inf str t1 t2) = Let inf str (deBruijn' ctx' t1) (deBruijn' ctx' t2) 
                                 where ctx' = (str,0):map(second succ) ctx
 deBruijn' _   t               = t
 
 shift :: Int -> Int -> Term -> Term
-shift c d (VarI str k)   = VarI str (if k<c then k else k+d)
-shift c d (Abs str ty t) = Abs str ty (shift (c+1) d t)
-shift c d (App t1 t2)    = App (shift c d t1) (shift c d t2)
+shift c d (VarI inf str k)   = VarI inf str (if k<c then k else k+d)
+shift c d (Abs inf str ty t) = Abs inf str ty (shift (c+1) d t)
+shift c d (App inf t1 t2)    = App inf (shift c d t1) (shift c d t2)
 shift c d t              = t
 
 -- [j -> s] t 
 subst :: Int -> Term -> Term -> Term
-subst j s (VarI str k)   = if j == k then s else VarI str j
-subst j s (Abs str ty t) = Abs str ty (subst (j+1) (shift 0 1 s) t)
-subst j s (App t1 t2)    = App (subst j s t1) (subst j s t2)
-subst j s (Cond t1 t2 t3)  = Cond (subst j s t1) (subst j s t2) (subst j s t3)
+subst j s (VarI inf str k)   = if j == k then s else VarI inf str j
+subst j s (Abs inf str ty t) = Abs inf str ty (subst (j+1) (shift 0 1 s) t)
+subst j s (App inf t1 t2)    = App inf (subst j s t1) (subst j s t2)
+subst j s (Cond inf t1 t2 t3)  = Cond inf (subst j s t1) (subst j s t2) (subst j s t3)
 subst s j t              = t
 
 {--
@@ -51,17 +51,17 @@ Reduce single step
   Right for irreducible term (value?)
 --}
 eval' :: Term -> Either Term Term
-eval' (App (Abs "_" _ t) _) = Left t                                -- E-WILDCARD
-eval' (App (Abs _ ty t) v)  = Left $ beta (eval1 v) t               -- E-AppAbs
-eval' (App t1 t2)           = case eval' t1 of
-                                Left t' -> Left $ App t' t2          -- E-App2
-                                Right t' -> Left $ App t1 (eval1 t2) -- E-App1
-eval' (Cond t1 t2 t3)       = case eval1 t1 of
-                                T -> Left t2
-                                F -> Left t3
-                                _ -> Left $ Cond (eval1 t1) t2 t3
-eval' (Let x t1 t2)         = case eval' t1 of
-                                Left  t' -> Left $ Let x t' t2
+eval' (App _ (Abs _ "_" _ t) _) = Left t                                -- E-WILDCARD
+eval' (App _ (Abs _ _ ty t) v)  = Left $ beta (eval1 v) t               -- E-AppAbs
+eval' (App inf t1 t2)           = case eval' t1 of
+                                Left t' -> Left $ App inf t' t2          -- E-App2
+                                Right t' -> Left $ App inf t1 (eval1 t2) -- E-App1
+eval' (Cond inf t1 t2 t3)       = case eval1 t1 of
+                                T _ -> Left t2
+                                F _ -> Left t3
+                                _ -> Left $ Cond inf (eval1 t1) t2 t3
+eval' (Let inf x t1 t2)         = case eval' t1 of
+                                Left  t' -> Left $ Let inf x t' t2
                                 Right t' -> Left $ beta t' t2
 eval' t                     = Right t
 

@@ -11,6 +11,9 @@ import SimpleTypes.Parser.Lexer
 import SimpleTypes.Syntax
 import SimpleTypes.Types
 
+locInfo :: SourcePos -> Info
+locInfo pos = Info (sourceLine pos) (sourceColumn pos) 
+
 contentParser :: Parser Term -> Parser Term
 contentParser p = do 
   T.whiteSpace lexer
@@ -22,7 +25,10 @@ parseProgram :: String -> Either ParseError Term
 parseProgram prg = parse (contentParser parseApplication ) "Program" prg 
 
 parseApplication :: Parser Term
-parseApplication = ( foldl1 App ) <$> ( many1 parseTerm )
+parseApplication = do
+  l <- many1 parseTerm
+  pos <- getPosition
+  return $ foldl1 (App (locInfo pos)) l
 
 parseTerm :: Parser Term
 parseTerm = spaces >> 
@@ -38,57 +44,68 @@ parseTerm = spaces >>
           ) <* spaces
 
 parseUnit :: Parser Term
-parseUnit = reserved "unit" >> return Unit
+parseUnit = string "unit" >> 
+            getPosition >>=
+            \p -> return $ Unit (locInfo p)
 
 parseTrue :: Parser Term
-parseTrue = reserved "True" >> return T
+parseTrue = do 
+  string "true"
+  pos <- getPosition
+  return $ T (locInfo pos)
 
 parseFalse :: Parser Term
-parseFalse = reserved "False" >> return F
+parseFalse = do 
+  string "false"
+  pos <- getPosition
+  return $ F (locInfo pos)
 
 parseVarLetter :: Parser Char
 parseVarLetter = satisfy isLower 
 
 -- variables
-parseVariable :: Parser Term
 parseVariable = do
   v <- many1 parseVarLetter
-  return $ Var v
+  pos <- getPosition
+  return $ Var (locInfo pos )v
 
 -- lambda abstraction
-parseAbstraction :: Parser Term
 parseAbstraction = do 
-  reservedOp "\\"
+  string "\\"
+  spaces
   x <- many1 parseVarLetter 
-  reservedOp ":"
+  char ':'
+  spaces
   ty <- parseType
-  reservedOp "."
+  char '.'
   t <- parseApplication
-  return $ Abs x ty t 
-
-{-parseE = parseTerm <|> parseApplication-}
+  pos <- getPosition
+  return $ Abs (locInfo pos) x ty t 
 
 parseE = parseApplication <|> parseTerm
 
 parseCond :: Parser Term
 parseCond = do 
-  string "cond" 
+  reserved "cond" 
   spaces
-  t1 <- parens parseApplication 
+  t1 <- parseTerm 
   spaces
-  t2 <- parens  parseApplication
+  t2 <- parseTerm
   spaces
-  t3 <- parseApplication
+  t3 <- parseTerm
   spaces
-  return $ Cond t1 t2 t3
+  pos <- getPosition
+  return $ Cond (locInfo pos) t1 t2 t3
 
 
-binops = [[Ex.Infix (reservedOp ";" >> return mkSeq )  Ex.AssocLeft]]
+binops l = [[Ex.Infix (reservedOp ";" >> return (mkSeq l))  Ex.AssocLeft]]
 
 parseSeq :: Parser Term
-parseSeq =  Ex.buildExpressionParser binops parseTerm
+parseSeq = do
+  pos <- getPosition
+  Ex.buildExpressionParser (binops (locInfo pos)) parseTerm
 
-mkSeq a b = App (Abs "_" TUnit b) a
+mkSeq loc a b = App loc (Abs loc  "_" TUnit b) a
 
 parseType = parseTypeUnit <|> 
             parseTypeBool <|> 

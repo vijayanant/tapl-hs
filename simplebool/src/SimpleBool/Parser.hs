@@ -8,6 +8,11 @@ import Text.Parsec
 import Text.Parsec.Char
 import Text.Parsec.String
 
+locInfo :: SourcePos -> Info
+locInfo pos = Info (sourceLine pos) (sourceColumn pos) 
+
+parens = between (string "(") (string ")")
+
 parseProgram :: String -> Term
 parseProgram prg = case parse parseApplication "Program" prg of
                       Left err -> ParseError (show err)
@@ -16,17 +21,19 @@ parseProgram prg = case parse parseApplication "Program" prg of
 parseApplication :: Parser Term
 parseApplication = do
   l <- many1 parseExpression
-  return $ foldl1 App l
+  pos <- getPosition
+  return $ foldl1 (App (locInfo pos)) l
 
 parseTerm :: Parser Term
-parseTerm = spaces >> (
-  parseAbstraction <|> 
-  parseTrue  <|>
-  parseFalse <|>
-  parseIf    <|>
-  parseVariable <|>
-  between (string "(") (string ")") parseTerm
-  )
+parseTerm = spaces >>
+  (   try parseAbstraction
+  <|> try parseTrue
+  <|> try parseFalse
+  <|> try parseIf
+  <|> try parseVariable
+  <|> try (parens parseTerm)
+  ) <* spaces
+
 
 parseExpression = do 
   spaces
@@ -35,10 +42,16 @@ parseExpression = do
   return t
 
 parseTrue :: Parser Term
-parseTrue = string "true" >> return T
+parseTrue = do 
+  string "true"
+  pos <- getPosition
+  return $ T (locInfo pos)
 
 parseFalse :: Parser Term
-parseFalse = string "false" >> return F
+parseFalse = do 
+  string "false"
+  pos <- getPosition
+  return $ F (locInfo pos)
 
 parseVarLetter :: Parser Char
 parseVarLetter = satisfy isLower 
@@ -46,7 +59,8 @@ parseVarLetter = satisfy isLower
 -- variables
 parseVariable = do
   v <- many1 parseVarLetter
-  return $ Var v
+  pos <- getPosition
+  return $ Var (locInfo pos )v
 
 -- lambda abstraction
 parseAbstraction = do 
@@ -56,7 +70,8 @@ parseAbstraction = do
   ty <- parseType
   char '.'
   t <- parseApplication
-  return $ Abs x ty t 
+  pos <- getPosition
+  return $ Abs (locInfo pos) x ty t 
 
 parseType = parseTypeBool <|> parseTypeArr
 
@@ -88,5 +103,6 @@ parseIf = do
   spaces
   t3 <- parseTerm
   spaces
-  return $ If t1 t2 t3
+  pos <- getPosition
+  return $ If (locInfo pos) t1 t2 t3
 

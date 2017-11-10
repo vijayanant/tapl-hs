@@ -2,13 +2,13 @@ module ULambda.Types where
 
 import Control.Applicative
 
-data Term = Var Loc String 
-          | VarI Loc String Int  -- variable as de Bruijn index 
-          | Abs Loc String Term -- lambda abstraction
-          | App Loc Term Term   -- application
+data Term = Var Info String 
+          | VarI Info String Int  -- variable as de Bruijn index 
+          | Abs Info String Term -- lambda abstraction
+          | App Info Term Term   -- application
           | ParseError String
 
-data Loc = Loc 
+data Info = Info 
   { row :: Int
   , col :: Int
   } deriving Show

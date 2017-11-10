@@ -9,8 +9,8 @@ import Text.Parsec
 import Text.Parsec.Char
 import Text.Parsec.String
 
-locInfo :: SourcePos -> Loc
-locInfo pos = Loc (sourceLine pos) (sourceColumn pos) 
+locInfo :: SourcePos -> Info
+locInfo pos = Info (sourceLine pos) (sourceColumn pos) 
 
 parseProgram :: String -> Term
 parseProgram prg = case parse parseApplication "code" prg of

@@ -1,20 +1,30 @@
 module SimpleTypes.Syntax where
 
 import Control.Applicative
-
 import SimpleTypes.Types
 
-data Term = Var String 
-          | VarI String Int
-          | T
-          | F
-          | Unit
-          | Cond Term Term Term
-          | Abs String Type Term -- lambda abstraction with type
-          | App Term Term
-          | Let String Term Term
+data Info = Info 
+  { row :: Int
+  , col :: Int
+  } deriving Show
+
+{-instance Show Info where-}
+  {-show (Info l c) = concat ["[line: ", show l, ", col: ", show c, " ] "]-}
+
+instance Eq Info where 
+  (==) i1 i2 = True
+
+data Term = Var Info String 
+          | VarI Info String Int
+          | T Info
+          | F Info
+          | Unit Info
+          | Cond Info Term Term Term
+          | Abs Info String Type Term -- lambda abstraction with type
+          | App Info Term Term
+          | Let Info String Term Term
           | ParseError String
-          deriving ( Eq, Show )
+          deriving (Eq, Show)
 
 prettyprint :: Term -> String
 prettyprint (Var x)       = concat [x] -- , ": ", prettyprint ty]
