@@ -27,16 +27,16 @@ data Term = Var Info String
           deriving (Eq, Show)
 
 prettyprint :: Term -> String
-prettyprint (Var x)       = concat [x] -- , ": ", prettyprint ty]
-prettyprint (VarI x k)    = concat [x] --, ": ", prettyprint ty]
-prettyprint (Abs x ty1 t) = concat ["(\\", x, ": ", show ty1, ". ", prettyprint t, ")"]
-prettyprint (App t1 t2)   = concat ["(", prettyprint t1,  ") (", prettyprint t2, ")"]
-prettyprint (Cond t1 t2 t3) = concat ["(Cond ", prettyprint t1, prettyprint t2, prettyprint t3, ")"]
-prettyprint (Let x t1 t2) = concat ["Let ", x, " = ", prettyprint t1, " in ", prettyprint t2]
-prettyprint (T)           = concat ["True"]
-prettyprint (F)           = concat ["False"]
-prettyprint (Unit)        = concat ["Unit"]
+prettyprint (Var _ x)       = concat [" ", x, " "] -- , ": ", prettyprint ty]
+prettyprint (VarI _ x k)    = concat [x] --, ": ", prettyprint ty]
+prettyprint (Abs _ x ty1 t) = concat ["(\\ ", x, ": ", show ty1, ". ", prettyprint t, ")"]
+prettyprint (App _ t1 t2)   = concat ["(", prettyprint t1,  prettyprint t2, ")" ]
+prettyprint (Cond _ t1 t2 t3) = concat ["(cond ", paren t1, paren t2, paren t3, ")"]
+prettyprint (Let _ x t1 t2) = concat ["let ", x, " = ", prettyprint t1, " in ", prettyprint t2]
+prettyprint (T _)           = concat [" true "]
+prettyprint (F _)           = concat [" false "]
+prettyprint (Unit _)        = concat [" unit" ]
 prettyprint (ParseError e)= e
 
-
+paren t = "(" ++prettyprint t ++ ")"
 
