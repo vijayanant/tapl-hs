@@ -45,7 +45,7 @@ instance Arbitrary Term where
                             , liftM4 Cond arbitrary subterm subterm subterm 
                             , liftM4 Abs  arbitrary varString arbitrary subterm
                             , liftM3 App arbitrary subterm subterm
-                            {-, liftM4 Let arbitrary varString subterm subterm-}
+                            , liftM4 Let arbitrary varString subterm subterm
                             ] 
               where subterm = term' (n `div` 2)
   

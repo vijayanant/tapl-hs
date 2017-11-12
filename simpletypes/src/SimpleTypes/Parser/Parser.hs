@@ -39,6 +39,7 @@ parseTerm = spaces >>
           <|> try  parseCond
           <|> try  parseVariable
           <|> try  ( parens parseSeq )
+          <|> try  ( parens parseLet )
           <|> try  ( parens parseTerm )
           <|> try  ( parens parseApplication )
           ) <* spaces
@@ -106,6 +107,22 @@ parseSeq = do
   Ex.buildExpressionParser (binops (locInfo pos)) parseTerm
 
 mkSeq loc a b = App loc (Abs loc  "_" TUnit b) a
+
+parseLet :: Parser Term
+parseLet = do 
+  spaces 
+  reserved "let"
+  spaces
+  x <- many1 parseVarLetter
+  spaces >> reserved "="
+  t1 <- parseTerm
+  spaces 
+  reserved "in"
+  spaces 
+  t2 <- parseTerm
+  spaces 
+  pos <- getPosition
+  return $ Let (locInfo pos) x t1 t2
 
 parseType:: Parser Type
 parseType = try parseTypeUnit 
