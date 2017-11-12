@@ -57,8 +57,7 @@ eval' (App inf t1 t2)           = case eval' t1 of
                                 Left t' -> Left $ App inf t' t2          -- E-App2
                                 Right t' -> Left $ App inf t1 (eval1 t2) -- E-App1
 eval' (Cond inf t1 t2 t3)       = case eval1 t1 of
-                                T _ -> Left t2
-                                F _ -> Left t3
+                                (Literal _ (LBool _))  -> Left t2
                                 _ -> Left $ Cond inf (eval1 t1) t2 t3
 eval' (Let inf x t1 t2)         = case eval' t1 of
                                 Left  t' -> Left $ Let inf x t' t2

@@ -1,15 +1,19 @@
 module SimpleTypes.Types 
 where
 
-data Type = TBool           -- Boolean Type 
+data Type = TUnit 
+          | TInt
+          | TFloat
+          | TBool 
           | TArr Type Type  -- Arrow type:  Type -> Type
-          | TUnit
           deriving ( Eq, Show )
 
 instance PrettryPrinter Type where 
+  prettyprint TUnit          = " Unit "
+  prettyprint TInt           = " Int "
+  prettyprint TFloat         = " Float "
   prettyprint TBool          = " Bool "
   prettyprint ( TArr t1 t2 ) = concat ["(", prettyprint t1, " -> ", prettyprint t2, ")"]
-  prettyprint TUnit          = " Unit "
 
 
 class PrettryPrinter a where 

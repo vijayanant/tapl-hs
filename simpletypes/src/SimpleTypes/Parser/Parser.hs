@@ -6,13 +6,12 @@ import Text.Parsec.Char
 import Text.Parsec.String (Parser)
 import qualified Text.Parsec.Token as T
 import qualified Text.Parsec.Expr as Ex
-
 import SimpleTypes.Parser.Lexer
 import SimpleTypes.Syntax
 import SimpleTypes.Types
 
 locInfo :: SourcePos -> Info
-locInfo pos = Info (sourceLine pos) (sourceColumn pos) 
+locInfo pos = Info (sourceLine pos) (sourceColumn pos)  (sourceName pos)
 
 contentParser :: Parser Term -> Parser Term
 contentParser p = do 
@@ -32,9 +31,7 @@ parseApplication = do
 
 parseTerm :: Parser Term
 parseTerm = spaces >> 
-          (   try  parseUnit
-          <|> try  parseTrue
-          <|> try  parseFalse
+          (   try  parseLiteral
           <|> try  parseAbstraction
           <|> try  parseCond
           <|> try  parseVariable
@@ -44,22 +41,47 @@ parseTerm = spaces >>
           <|> try  ( parens parseApplication )
           ) <* spaces
 
+parseLiteral :: Parser Term
+parseLiteral = try parseUnit
+           <|> try parseFalse 
+           <|> try parseTrue
+           <|> try parseFloat
+           <|> try parseInteger
+
+
 parseUnit :: Parser Term
-parseUnit = spaces >> reserved "unit" >> 
-            getPosition >>=
-            \p -> return $ Unit (locInfo p)
+parseUnit = do 
+  reserved "unit"
+  pos <- getPosition
+  return $ Literal (locInfo pos) LUnit
 
 parseTrue :: Parser Term
 parseTrue = do 
   spaces >> reserved "true"
   pos <- getPosition
-  return $ T (locInfo pos)
+  return $ Literal (locInfo pos) (LBool True)
 
 parseFalse :: Parser Term
 parseFalse = do 
   spaces >> reserved "false"
   pos <- getPosition
-  return $ F (locInfo pos)
+  return $ Literal (locInfo pos) (LBool False)
+
+parseInteger :: Parser Term
+parseInteger = do
+  pos <- getPosition 
+  i <-  T.integer lexer
+  return $ Literal (locInfo pos) (LInt i)
+
+parseFloat = do 
+  pos <- getPosition 
+  sign <- option 1 parseSign
+  x <- T.float lexer
+  return $ Literal (locInfo pos) (LFloat (sign * x))
+
+parseSign = do 
+  s <- oneOf "+-"
+  return $ if s == '-' then (-1.0) else (1.0)
 
 parseVarLetter :: Parser Char
 parseVarLetter = satisfy isLower 
@@ -127,6 +149,8 @@ parseLet = do
 parseType:: Parser Type
 parseType = try parseTypeUnit 
         <|> try parseTypeBool
+        <|> try parseTypeInt
+        <|> try parseTypeFloat
         <|> try parseTypeArr
         <|> try (parens parseType)
 
@@ -139,6 +163,18 @@ parseTypeBool :: Parser Type
 parseTypeBool = do
   reserved "Bool"
   return TBool
+
+parseTypeInt :: Parser Type
+parseTypeInt = do
+  reserved "Int"
+  return TInt
+
+parseTypeFloat :: Parser Type
+parseTypeFloat = do
+  reserved "Float"
+  return TFloat
+
+
 
 parseTypeArr = do
   spaces >> char '('

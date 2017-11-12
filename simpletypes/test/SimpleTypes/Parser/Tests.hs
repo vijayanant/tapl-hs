@@ -15,7 +15,7 @@ import Test.QuickCheck.Arbitrary
 
 -- dummy location info for generators
 -- location values are not considered for equality tests 
-l = Info 0 0 
+l = Info 0 0 ""
 
 -- generates lower case strins (of length >= 1)
 varString :: Gen String
@@ -27,28 +27,30 @@ instance Arbitrary Info where
 instance Arbitrary Type where 
   arbitrary =  sized type' where 
     type' :: Int -> Gen Type
-    type' 0 = return TUnit
-    type' n = oneof [ return TUnit
-                    , return TBool
+    type' 0 = oneof [ return TUnit, return TBool, return TInt, return TFloat]
+    type' n = oneof [ return TUnit, return TBool, return TInt, return TFloat
                     , liftM2 TArr subtype  subtype 
                     ]
               where subtype = type' (n `div` 2)
 
+instance Arbitrary Lit where 
+  arbitrary = oneof [ return  LUnit
+                    , liftM LBool arbitrary
+                    , liftM LInt arbitrary
+                    , liftM LFloat arbitrary]
+
 instance Arbitrary Term where 
   arbitrary = sized term' where 
     term' :: Int -> Gen Term
-    term' 0  = liftM T arbitrary
+    term' 0  = liftM2 Literal arbitrary arbitrary
     term' n  = oneof [ liftM2 Var arbitrary varString
-                            , liftM T arbitrary
-                            , liftM F arbitrary
-                            , liftM Unit arbitrary
+                            , liftM2 Literal arbitrary arbitrary
                             , liftM4 Cond arbitrary subterm subterm subterm 
                             , liftM4 Abs  arbitrary varString arbitrary subterm
                             , liftM3 App arbitrary subterm subterm
                             , liftM4 Let arbitrary varString subterm subterm
                             ] 
               where subterm = term' (n `div` 2)
-  
 
 tests :: TestTree
 tests =  testGroup "Parse Terms" 
@@ -87,7 +89,7 @@ t_parseSeq_3 = assertEqual "Failed to parse seq"
         (Right "((\\ _:  Unit . ((\\ _:  Unit .  false ) false ))(\\ z:  Bool .  z ))")
         (fmap prettyprint (parseProgram "((\\z:Bool.z);false;false)"))
 
-t_parseTrue_1  = assertEqual "Failed to parse 'True'"  ( Right $ T l )  $ parseProgram "true"
-t_parseFalse_1 = assertEqual "Failed to parse 'False'" ( Right $ F l )  $ parseProgram "false"
-t_ParseUnit_1  = assertEqual "Failed to parse 'Unit'"  (Right $ Unit l) $ parseProgram "unit"
+t_parseTrue_1  = assertEqual "Failed to parse 'True'"  (Right $ Literal l (LBool True))  $ parseProgram "true"
+t_parseFalse_1 = assertEqual "Failed to parse 'False'" (Right $ Literal l (LBool False))  $ parseProgram "false"
+t_ParseUnit_1  = assertEqual "Failed to parse 'Unit'"  (Right $ Literal l LUnit) $ parseProgram "unit"
 

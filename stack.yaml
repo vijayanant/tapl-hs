@@ -5,3 +5,5 @@ packages:
 - ./ulambda
 - ./simplebool/
 - ./simpletypes/
+
+extra-deps:

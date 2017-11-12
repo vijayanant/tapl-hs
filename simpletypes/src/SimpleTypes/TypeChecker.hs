@@ -22,9 +22,10 @@ getBinding :: Context -> Int -> Binding
 getBinding ctx i = (snd . head . drop i) ctx
 
 typeOf :: Context -> Term -> Either String Type
-typeOf _ (T _) = Right TBool
-typeOf _ (F _) = Right TBool
-typeOf _ (Unit _) = Right TUnit
+typeOf _ (Literal _ LUnit )     = Right TUnit
+typeOf _ (Literal _ (LBool _))  = Right TBool
+typeOf _ (Literal _ (LInt _))   = Right TInt
+typeOf _ (Literal _ (LFloat _)) = Right TFloat
 typeOf ctx (Var loc x ) = Left $ prettyprint loc ++ ": undefined variable " ++ x
 typeOf ctx (VarI loc x k) = case  getType ctx k  of
   Right ty -> Right ty
