@@ -19,6 +19,7 @@ deBruijn' ctx (App inf  t1 t2 )   = App inf (deBruijn' ctx t1) (deBruijn' ctx t2
 deBruijn' ctx (Cond inf t1 t2 t3) = Cond inf (deBruijn' ctx t1) (deBruijn' ctx t2) (deBruijn' ctx t3)
 deBruijn' ctx (Let inf str t1 t2) = Let inf str (deBruijn' ctx' t1) (deBruijn' ctx' t2) 
                                 where ctx' = (str,0):map(second succ) ctx
+deBruijn' ctx (BinaryOp inf op t1 t2) = BinaryOp inf op (deBruijn' ctx t1) (deBruijn' ctx t2 )
 deBruijn' _   t               = t
 
 shift :: Int -> Int -> Term -> Term
@@ -33,6 +34,7 @@ subst j s (VarI inf str k)   = if j == k then s else VarI inf str j
 subst j s (Abs inf str ty t) = Abs inf str ty (subst (j+1) (shift 0 1 s) t)
 subst j s (App inf t1 t2)    = App inf (subst j s t1) (subst j s t2)
 subst j s (Cond inf t1 t2 t3)  = Cond inf (subst j s t1) (subst j s t2) (subst j s t3)
+subst j s (BinaryOp inf op t1 t2) = BinaryOp inf op (subst j s t1) (subst j s t2)
 subst s j t              = t
 
 {--
@@ -57,11 +59,16 @@ eval' (App inf t1 t2)           = case eval' t1 of
                                 Left t' -> Left $ App inf t' t2          -- E-App2
                                 Right t' -> Left $ App inf t1 (eval1 t2) -- E-App1
 eval' (Cond inf t1 t2 t3)       = case eval1 t1 of
-                                (Literal _ (LBool _))  -> Left t2
+                                (Literal _ (LBool True))  -> Left t2
                                 _ -> Left $ Cond inf (eval1 t1) t2 t3
 eval' (Let inf x t1 t2)         = case eval' t1 of
                                 Left  t' -> Left $ Let inf x t' t2
                                 Right t' -> Left $ beta t' t2
+eval' (BinaryOp inf op (Literal _ l1) (Literal _ l2))   = 
+  return $ Literal inf $ performOp op l1 l2
+eval' (BinaryOp inf op t1 t2)   = case eval' t1 of
+        Left t1' -> Left $ BinaryOp inf op t1' t2
+        Right t1' ->  Left $ BinaryOp inf op t1' (eval1 t2)
 eval' t                     = Right t
 
 eval1 :: Term -> Term
@@ -83,3 +90,13 @@ run t = do
     Right ty -> return $ eval $ t'
     Left e   -> Left $ "TypeChecker: " ++  e
 
+
+performOp :: Op -> Lit -> Lit -> Lit
+performOp (Plus) (LInt x) (LInt y) = LInt $ x + y
+performOp (Plus) (LFloat x) (LFloat y) = LFloat $ x + y
+performOp (Minus) (LInt x) (LInt y) = LInt $ x - y
+performOp (Minus) (LFloat x) (LFloat y) = LFloat $ x - y
+performOp (Times) (LInt x) (LInt y) = LInt $ x * y
+performOp (Times) (LFloat x) (LFloat y) = LFloat $ x * y
+performOp (Divide) (LInt x) (LInt y) = LInt $ x `div` y
+performOp (Divide) (LFloat x) (LFloat y) = LFloat $ x / y

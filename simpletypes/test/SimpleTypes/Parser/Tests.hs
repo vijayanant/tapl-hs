@@ -37,7 +37,15 @@ instance Arbitrary Lit where
   arbitrary = oneof [ return  LUnit
                     , liftM LBool arbitrary
                     , liftM LInt arbitrary
-                    , liftM LFloat arbitrary]
+                    , liftM LFloat arbitrary
+                    ]
+
+instance Arbitrary Op where 
+  arbitrary = oneof [ return Plus
+                    , return Minus
+                    , return Times
+                    , return Divide
+                    ]
 
 instance Arbitrary Term where 
   arbitrary = sized term' where 
@@ -49,6 +57,7 @@ instance Arbitrary Term where
                             , liftM4 Abs  arbitrary varString arbitrary subterm
                             , liftM3 App arbitrary subterm subterm
                             , liftM4 Let arbitrary varString subterm subterm
+                            , liftM4 BinaryOp arbitrary arbitrary subterm subterm
                             ] 
               where subterm = term' (n `div` 2)
 

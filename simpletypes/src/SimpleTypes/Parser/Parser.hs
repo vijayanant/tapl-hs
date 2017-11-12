@@ -1,5 +1,6 @@
 module SimpleTypes.Parser.Parser  where
   
+import Data.Maybe
 import Data.Char
 import Text.Parsec
 import Text.Parsec.Char
@@ -35,6 +36,7 @@ parseTerm = spaces >>
           <|> try  parseAbstraction
           <|> try  parseCond
           <|> try  parseVariable
+          <|> try  ( parens parseArithExpr )
           <|> try  ( parens parseSeq )
           <|> try  ( parens parseLet )
           <|> try  ( parens parseTerm )
@@ -48,6 +50,34 @@ parseLiteral = try parseUnit
            <|> try parseFloat
            <|> try parseInteger
 
+binary s assoc = Ex.Infix (parseOp s) assoc
+
+parseOp :: String -> Parser (Term -> Term -> Term)
+parseOp op = do 
+  pos <- getPosition
+  reservedOp op
+  return $ BinaryOp (locInfo pos) operation 
+    where 
+      operation = (fromJust (lookup op opTable))
+
+opTable = [ ("+", Plus)
+          , ("-", Minus)
+          , ("*", Times)
+          , ("/", Divide)
+          ]
+table = [
+          [ binary "*" Ex.AssocLeft
+          , binary "/" Ex.AssocLeft
+          ]
+        , [ binary "+" Ex.AssocLeft
+          , binary "-" Ex.AssocLeft
+          ]
+        ]
+
+parseArithExpr ::  Parser Term
+parseArithExpr = do 
+  pos <- getPosition
+  Ex.buildExpressionParser table parseTerm
 
 parseUnit :: Parser Term
 parseUnit = do 
@@ -120,13 +150,12 @@ parseCond = do
   pos <- getPosition
   return $ Cond (locInfo pos) t1 t2 t3
 
-
-binops l = [[Ex.Infix (reservedOp ";" >> return (mkSeq l))  Ex.AssocRight]]
-
 parseSeq :: Parser Term
 parseSeq = do
   pos <- getPosition
-  Ex.buildExpressionParser (binops (locInfo pos)) parseTerm
+  Ex.buildExpressionParser (seqOp (locInfo pos)) parseTerm
+
+seqOp l = [[Ex.Infix (reservedOp ";" >> return (mkSeq l))  Ex.AssocRight]]
 
 mkSeq loc a b = App loc (Abs loc  "_" TUnit b) a
 

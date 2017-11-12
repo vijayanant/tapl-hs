@@ -51,6 +51,14 @@ typeOf ctx (App loc t1 t2) = do
     ( TArr ty11 ty12 )              -> Left $ prettyprint loc ++ ": parameter type mismatch"
     _                               -> Left $ prettyprint loc ++ ": arrow type expected"
 typeOf ctx (Let _ x t1 t2) = do 
-  ty1 <- typeOf ctx t1 
+  ty1 <- typeOf ctx t1
   let ctx' =  addBinding ctx x (VarBind ty1)
-  typeOf ctx' t2 
+  typeOf ctx' t2
+typeOf ctx (BinaryOp loc op t1 t2) = do
+  ty1 <- typeOf ctx t1
+  ty2 <- typeOf ctx t2
+  case (ty1, ty2) of
+    (TInt, TInt) -> Right TInt
+    (TFloat, TFloat) -> Right TFloat
+    (a, b) | a == b -> Left $ prettyprint loc ++ ": operation not supported"
+    (a, b) | a /= b -> Left $ prettyprint loc ++ ": incompatible types"
