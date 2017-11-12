@@ -25,7 +25,14 @@ instance Arbitrary Info where
   arbitrary = return l
 
 instance Arbitrary Type where 
-  arbitrary = return TBool
+  arbitrary =  sized type' where 
+    type' :: Int -> Gen Type
+    type' 0 = return TUnit
+    type' n = oneof [ return TUnit
+                    , return TBool
+                    , liftM2 TArr subtype  subtype 
+                    ]
+              where subtype = type' (n `div` 2)
 
 instance Arbitrary Term where 
   arbitrary = sized term' where 
@@ -38,7 +45,7 @@ instance Arbitrary Term where
                             , liftM4 Cond arbitrary subterm subterm subterm 
                             , liftM4 Abs  arbitrary varString arbitrary subterm
                             , liftM3 App arbitrary subterm subterm
-                            {-, liftM4 Let arbitrary arbitrary subterm subterm-}
+                            {-, liftM4 Let arbitrary varString subterm subterm-}
                             ] 
               where subterm = term' (n `div` 2)
   

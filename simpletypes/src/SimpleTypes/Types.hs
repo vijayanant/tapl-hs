@@ -4,14 +4,16 @@ where
 data Type = TBool           -- Boolean Type 
           | TArr Type Type  -- Arrow type:  Type -> Type
           | TUnit
-          deriving Eq
+          deriving ( Eq, Show )
+
+instance PrettryPrinter Type where 
+  prettyprint TBool          = " Bool "
+  prettyprint ( TArr t1 t2 ) = concat ["(", prettyprint t1, " -> ", prettyprint t2, ")"]
+  prettyprint TUnit          = " Unit "
 
 
-instance Show Type where
-  show TBool          = "Bool"
-  show ( TArr t1 t2 ) = concat ["(", show t1, " -> ", show t2, ")"]
-  show TUnit          = "Unit"
-
+class PrettryPrinter a where 
+  prettyprint :: a -> String
 
 
 

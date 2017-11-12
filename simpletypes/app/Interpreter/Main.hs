@@ -1,6 +1,6 @@
 module Main where
 
-import SimpleTypes.Syntax
+import SimpleTypes.Types (prettyprint)
 import SimpleTypes.Evaluator
 import SimpleTypes.Parser.Parser
 
@@ -14,12 +14,9 @@ main = do
     [filename] -> do
       prg <- readFile filename 
       ast <- fmap (parseProgram)  (readFile filename)
-      putStr "AST ==> \n" 
-      putStrLn (show ast)
       case ast of
         Left err -> putStrLn $ show err
         Right exp -> do  
-          putStrLn $ "\nEvaluation result  ==>" 
-          putStrLn $ either show show (run exp)
+          putStrLn $ either show prettyprint (run exp)
     _ -> getProgName >>= \n ->  putStrLn $ "Usage: " ++ n  ++ "<sourceFile>"
 

@@ -40,23 +40,23 @@ parseTerm = spaces >>
           <|> try  parseVariable
           <|> try  ( parens parseTerm )
           <|> try  ( parens parseApplication )
-          <|> try  ( parens parseSeq )
+          {-<|> try  ( parseSeq )-}
           ) <* spaces
 
 parseUnit :: Parser Term
-parseUnit = string "unit" >> 
+parseUnit = spaces >> reserved "unit" >> 
             getPosition >>=
             \p -> return $ Unit (locInfo p)
 
 parseTrue :: Parser Term
 parseTrue = do 
-  string "true"
+  spaces >> reserved "true"
   pos <- getPosition
   return $ T (locInfo pos)
 
 parseFalse :: Parser Term
 parseFalse = do 
-  string "false"
+  spaces >> reserved "false"
   pos <- getPosition
   return $ F (locInfo pos)
 
@@ -98,7 +98,7 @@ parseCond = do
   return $ Cond (locInfo pos) t1 t2 t3
 
 
-binops l = [[Ex.Infix (reservedOp ";" >> return (mkSeq l))  Ex.AssocLeft]]
+binops l = [[Ex.Infix (reservedOp ";" >> return (mkSeq l))  Ex.AssocRight]]
 
 parseSeq :: Parser Term
 parseSeq = do
@@ -107,14 +107,18 @@ parseSeq = do
 
 mkSeq loc a b = App loc (Abs loc  "_" TUnit b) a
 
-parseType = parseTypeUnit <|> 
-            parseTypeBool <|> 
-            parseTypeArr
+parseType:: Parser Type
+parseType = try parseTypeUnit 
+        <|> try parseTypeBool
+        <|> try parseTypeArr
+        <|> try (parens parseType)
 
+parseTypeUnit :: Parser Type
 parseTypeUnit = do
   reserved "Unit" 
   return TUnit
 
+parseTypeBool :: Parser Type
 parseTypeBool = do
   reserved "Bool"
   return TBool
@@ -127,6 +131,6 @@ parseTypeArr = do
   spaces
   t2 <- parseType
   spaces >> char ')'
-  return $ TArr t2 t2
+  return $ TArr t1 t2
 
 

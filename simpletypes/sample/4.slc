@@ -1,1 +1,1 @@
-cond (\x:Bool.True) (True) (False)
+cond (\x:Bool.true) (true) (false)

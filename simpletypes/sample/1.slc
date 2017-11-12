@@ -1,1 +1,1 @@
-(\x:Bool.x) True 
+(\x:Bool.x) true 
