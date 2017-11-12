@@ -53,23 +53,41 @@ instance Arbitrary Term where
 tests :: TestTree
 tests =  testGroup "Parse Terms" 
   [ propertyTests
+  , extendedSyntaxTests
   , parseValueTerms
   ]
 
 propertyTests = testGroup "Test properties "
-  [ testProperty "parse = parse . prettyprint . parse"  prop_parse
+  [ testProperty "prop_parse"  prop_parse
+  ]
+
+extendedSyntaxTests = testGroup "Test parsing extended syntax"
+  [ testCase "t_parseSeq_1" t_parseSeq_1
+  , testCase "t_parseSeq_2" t_parseSeq_2
+  , testCase "t_parseSeq_3" t_parseSeq_3
   ]
 
 parseValueTerms = testGroup "Value Terms"
-  [ testCase "parseTrue"   t_true_1
-  , testCase "parseFalse"  t_false_1
-  , testCase "parseUnit"   t_unit_1
+  [ testCase "t_parseTrue_1"   t_parseTrue_1
+  , testCase "t_parseFalse_1"  t_parseFalse_1
+  , testCase "t_parseUnit_1"   t_ParseUnit_1
   ]
 
 prop_parse :: Term ->  Bool
 prop_parse term  =  ( Right term ) ==  ( parseProgram . prettyprint ) term
 
-t_true_1  = assertEqual "Failed to parse 'True'"  ( Right $ T l )      $ parseProgram "true"
-t_false_1 = assertEqual "Failed to parse 'False'" ( Right $ F l )      $ parseProgram "false"
-t_unit_1  = assertEqual "Failed to parse 'Unit'"  (Right $ Unit l)     $ parseProgram "unit"
+t_parseSeq_1 = assertEqual "Failed to parse seq" 
+  (Right "((\\ _:  Unit .  false ) true )") ( fmap prettyprint (parseProgram "(true;false)"))
+
+t_parseSeq_2 = assertEqual "Failed to parse seq" 
+        (Right "((\\ _:  Unit . ((\\ _:  Unit .  false ) false )) true )")
+        (fmap prettyprint (parseProgram "(true;false;false)"))
+
+t_parseSeq_3 = assertEqual "Failed to parse seq" 
+        (Right "((\\ _:  Unit . ((\\ _:  Unit .  false ) false ))(\\ z:  Bool .  z ))")
+        (fmap prettyprint (parseProgram "((\\z:Bool.z);false;false)"))
+
+t_parseTrue_1  = assertEqual "Failed to parse 'True'"  ( Right $ T l )  $ parseProgram "true"
+t_parseFalse_1 = assertEqual "Failed to parse 'False'" ( Right $ F l )  $ parseProgram "false"
+t_ParseUnit_1  = assertEqual "Failed to parse 'Unit'"  (Right $ Unit l) $ parseProgram "unit"
 

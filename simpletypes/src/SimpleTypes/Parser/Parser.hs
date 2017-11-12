@@ -38,9 +38,9 @@ parseTerm = spaces >>
           <|> try  parseAbstraction
           <|> try  parseCond
           <|> try  parseVariable
+          <|> try  ( parens parseSeq )
           <|> try  ( parens parseTerm )
           <|> try  ( parens parseApplication )
-          {-<|> try  ( parseSeq )-}
           ) <* spaces
 
 parseUnit :: Parser Term
