@@ -10,6 +10,7 @@ lexer = T.makeTokenParser style
   where
     names = [ "unit", "Unit", "Bool", "true", "false"
             , "let", "in", "="
+            , "{", ",", "}"
             ]
     ops   = [ ";", ":", "."]
     style = emptyDef 

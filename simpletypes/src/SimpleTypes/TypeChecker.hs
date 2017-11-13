@@ -62,3 +62,7 @@ typeOf ctx (BinaryOp loc op t1 t2) = do
     (TFloat, TFloat) -> Right TFloat
     (a, b) | a == b -> Left $ prettyprint loc ++ ": operation not supported"
     (a, b) | a /= b -> Left $ prettyprint loc ++ ": incompatible types"
+typeOf ctx (Pair _ t1 t2) = do
+  ty1 <- typeOf ctx t1
+  ty2 <- typeOf ctx t2
+  return $ TPair ty1 ty2

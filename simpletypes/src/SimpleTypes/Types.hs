@@ -6,6 +6,7 @@ data Type = TUnit
           | TFloat
           | TBool 
           | TArr Type Type  -- Arrow type:  Type -> Type
+          | TPair Type Type
           deriving ( Eq, Show )
 
 instance PrettryPrinter Type where 
@@ -13,12 +14,8 @@ instance PrettryPrinter Type where
   prettyprint TInt           = " Int "
   prettyprint TFloat         = " Float "
   prettyprint TBool          = " Bool "
-  prettyprint ( TArr t1 t2 ) = concat ["(", prettyprint t1, " -> ", prettyprint t2, ")"]
+  prettyprint (TArr  t1 t2 ) = concat ["(", prettyprint t1, " -> ", prettyprint t2, ")"]
+  prettyprint (TPair t1 t2 ) = concat ["{", prettyprint t1, ", ", prettyprint t2, "}"]
 
-
-class PrettryPrinter a where 
+class PrettryPrinter a where
   prettyprint :: a -> String
-
-
-
-

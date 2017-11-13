@@ -40,6 +40,7 @@ parseTerm = spaces >>
           <|> try  ( parens parseSeq )
           <|> try  ( parens parseLet )
           <|> try  ( parens parseTerm )
+          <|> try  parsePair
           <|> try  ( parens parseApplication )
           ) <* spaces
 
@@ -92,7 +93,7 @@ parseTrue = do
   return $ Literal (locInfo pos) (LBool True)
 
 parseFalse :: Parser Term
-parseFalse = do 
+parseFalse = do
   spaces >> reserved "false"
   pos <- getPosition
   return $ Literal (locInfo pos) (LBool False)
@@ -175,12 +176,23 @@ parseLet = do
   pos <- getPosition
   return $ Let (locInfo pos) x t1 t2
 
+parsePair :: Parser Term
+parsePair = do 
+  string "{"
+  t1 <- parseTerm
+  string ","
+  t2 <- parseTerm
+  string "}"
+  pos <- getPosition
+  return $ Pair (locInfo pos) t1 t2
+
 parseType:: Parser Type
 parseType = try parseTypeUnit 
         <|> try parseTypeBool
         <|> try parseTypeInt
         <|> try parseTypeFloat
         <|> try parseTypeArr
+        <|> try parseTypePair
         <|> try (parens parseType)
 
 parseTypeUnit :: Parser Type
@@ -203,7 +215,14 @@ parseTypeFloat = do
   reserved "Float"
   return TFloat
 
-
+parseTypePair :: Parser Type
+parseTypePair = do
+  string "{"
+  t1 <- parseType
+  string ","
+  t2 <- parseType 
+  string "}"
+  return $ TPair t1 t2 
 
 parseTypeArr = do
   spaces >> char '('
